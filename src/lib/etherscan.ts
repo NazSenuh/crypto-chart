@@ -21,6 +21,10 @@ export const getBalance = async (address: string): Promise<string> => {
 
   const data = await fetchWithRetry<EtherscanBalanceResponse>(url, { next: { revalidate: 60 } } as RequestInit);
 
+  if (data.status !== '1') {
+    throw new Error(`EtherScan API Error: ${data.message || 'NOTOK'} - ${data.result || 'Unknown error'}`);
+  }
+
   return data.result;
 };
 

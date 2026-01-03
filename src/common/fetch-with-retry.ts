@@ -22,10 +22,20 @@ export const fetchWithRetry = async <T>(url: string, options?: RequestInit): Pro
     const response = await fetch(url, options);
     const data = await response.json();
 
-    if (data.status === '0' && data.result?.includes('rate limit')) {
-      console.log(`Rate limited, retry ${attempt}/${MAX_RETRIES}...`);
-      await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
-      continue;
+    // Логування для діагностики
+    if (data.status === '0') {
+      console.error(`Etherscan API Error (attempt ${attempt}/${MAX_RETRIES}):`, {
+        status: data.status,
+        message: data.message,
+        result: data.result,
+        url: url.replace(/apikey=[^&]+/, 'apikey=***'), // Приховуємо API ключ в логах
+      });
+      
+      if (data.result?.includes('rate limit')) {
+        console.log(`Rate limited, retry ${attempt}/${MAX_RETRIES}...`);
+        await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
+        continue;
+      }
     }
 
     return data;
