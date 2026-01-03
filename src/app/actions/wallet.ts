@@ -48,12 +48,17 @@ const getTimestampForPeriod = (period: TimePeriod): number => {
 };
 
 const fetchWalletDataInternal = async (address: string): Promise<WalletData> => {
-  const [balanceWei, ethPrice, transactions, usdcBalanceWei] = await Promise.all([
-    getBalance(address),
-    getEthPrice(),
-    getTransactions(address),
-    getUSDCBalance(address).catch(() => '0'),
-  ]);
+  // Послідовні запити з затримкою, щоб не перевищити rate limit (3-5 запитів/сек)
+  const balanceWei = await getBalance(address);
+  await new Promise(resolve => setTimeout(resolve, 350)); // ~2.8 запитів/сек
+  
+  const ethPrice = await getEthPrice();
+  await new Promise(resolve => setTimeout(resolve, 350));
+  
+  const transactions = await getTransactions(address);
+  await new Promise(resolve => setTimeout(resolve, 350));
+  
+  const usdcBalanceWei = await getUSDCBalance(address).catch(() => '0');
 
   const balanceEth = weiToEth(balanceWei);
   const balanceUSD = balanceEth * ethPrice;
@@ -150,11 +155,14 @@ const fetchProfitLossInternal = async (address: string, period: TimePeriod): Pro
   const fromTimestamp = getTimestampForPeriod(period);
   const toTimestamp = Date.now();
 
-  const [balanceWei, ethPrice, transactions] = await Promise.all([
-    getBalance(address),
-    getEthPrice(),
-    getTransactions(address),
-  ]);
+  // Послідовні запити з затримкою, щоб не перевищити rate limit
+  const balanceWei = await getBalance(address);
+  await new Promise(resolve => setTimeout(resolve, 350));
+  
+  const ethPrice = await getEthPrice();
+  await new Promise(resolve => setTimeout(resolve, 350));
+  
+  const transactions = await getTransactions(address);
 
   const currentBalance = weiToEth(balanceWei);
   const currentValueUSD = currentBalance * ethPrice;

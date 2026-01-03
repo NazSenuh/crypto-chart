@@ -31,7 +31,7 @@ export const fetchWithRetry = async <T>(url: string, options?: RequestInit): Pro
         url: url.replace(/apikey=[^&]+/, 'apikey=***'), // Приховуємо API ключ в логах
       });
       
-      if (data.result?.includes('rate limit')) {
+      if (data.result?.includes('rate limit') || data.message?.includes('rate limit') || data.result?.includes('Max calls per sec')) {
         console.log(`Rate limited, retry ${attempt}/${MAX_RETRIES}...`);
         await new Promise(resolve => setTimeout(resolve, RETRY_DELAY * attempt));
         continue;
